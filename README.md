@@ -147,7 +147,7 @@ The local application now has seeded API-backed data. Add genuine screenshots af
 ## Current limitations and next steps
 
 - A local PostgreSQL container and ignored `.env` are configured in this checkout; another developer will need to create their own `.env` before running the database-backed flows.
-- Catalog products are fictional demo data; there are no product photos, reviews, ratings, purchases, or external retail links.
+- Catalog products are fictional demo data with original in-app SVG illustrations; there are no real product photographs, reviews, ratings, purchases, or external retail links.
 - The current dependency audit flags a high-severity advisory in the Prisma 6 development CLI’s `deepmerge-ts` dependency. The suggested automatic fix jumps to Prisma 7, so the CLI remains on the tested Prisma 6 line pending a deliberate upgrade and migration check.
 - Deployment configuration and provider selection remain to be completed after checking current platform requirements.
 - A production deployment should also choose a deployment-specific session-secret rotation and database backup process.

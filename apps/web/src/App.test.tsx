@@ -43,6 +43,11 @@ describe('discovery journey', () => {
       </MemoryRouter>,
     );
     expect(await screen.findByRole('link', { name: 'Forma One' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('img', {
+        name: 'Smartphones illustration for fictional demo product Forma One',
+      }),
+    ).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Add Forma One to comparison' }));
     await user.click(screen.getByRole('link', { name: /Compare/ }));
     expect(await screen.findByText('Forma One')).toBeInTheDocument();

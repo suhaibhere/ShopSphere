@@ -23,6 +23,7 @@ import {
   X,
 } from 'lucide-react';
 import { api, type Product, type SavedComparison, type User } from './services/api';
+import { ProductVisual } from './components/ProductVisual';
 import './features.css';
 
 type AppState = {
@@ -589,21 +590,7 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
         >
           <Heart size={16} fill={saved ? 'currentColor' : 'none'} />
         </button>
-        {product.imageUrl ? (
-          <img src={product.imageUrl} alt="" loading="lazy" />
-        ) : (
-          <div className="product-object" aria-hidden="true">
-            <span>
-              {product.category.slug === 'headphones'
-                ? '◒'
-                : product.category.slug === 'smartphones'
-                  ? '▯'
-                  : product.category.slug === 'laptops'
-                    ? '▱'
-                    : '◉'}
-            </span>
-          </div>
-        )}
+        <ProductVisual product={product} />
         <span className="demo-flag">FICTIONAL DEMO</span>
       </div>
       <div className="product-meta">
@@ -677,15 +664,7 @@ function ProductDetail() {
           <span className="eyebrow">
             PRODUCT NOTE&nbsp; / &nbsp;{product.category.name.toUpperCase()}
           </span>
-          <div className="detail-object">
-            {product.category.slug === 'headphones'
-              ? '◒'
-              : product.category.slug === 'smartphones'
-                ? '▯'
-                : product.category.slug === 'laptops'
-                  ? '▱'
-                  : '◉'}
-          </div>
+          <ProductVisual product={product} />
           <span className="demo-flag">FICTIONAL DEMONSTRATION PRODUCT</span>
         </div>
         <div className="detail-copy">
@@ -802,13 +781,7 @@ function ComparePage() {
                         <X size={14} />
                       </button>
                       <div className="comparison-object">
-                        {product.category.slug === 'headphones'
-                          ? '◒'
-                          : product.category.slug === 'smartphones'
-                            ? '▯'
-                            : product.category.slug === 'laptops'
-                              ? '▱'
-                              : '◉'}
+                        <ProductVisual product={product} />
                       </div>
                       <span className="eyebrow">{product.brand}</span>
                       <Link to={`/products/${product.slug}`}>{product.name}</Link>

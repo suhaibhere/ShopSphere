@@ -1,0 +1,38 @@
+{
+  "name": "shopsphere",
+  "private": true,
+  "type": "module",
+  "version": "0.1.0",
+  "workspaces": [
+    "apps/web",
+    "apps/api"
+  ],
+  "scripts": {
+    "dev": "concurrently -k -n api,web -c yellow,cyan \"npm run dev -w @shopsphere/api\" \"npm run dev -w @shopsphere/web\"",
+    "build": "npm run build -w @shopsphere/api && npm run build -w @shopsphere/web",
+    "typecheck": "npm run typecheck -w @shopsphere/api && npm run typecheck -w @shopsphere/web",
+    "lint": "eslint apps --ext .ts,.tsx",
+    "test": "npm run test -w @shopsphere/api && npm run test -w @shopsphere/web",
+    "db:generate": "npm run db:generate -w @shopsphere/api",
+    "db:migrate": "npm run db:migrate -w @shopsphere/api",
+    "db:seed": "npm run db:seed -w @shopsphere/api"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.0",
+    "concurrently": "^9.2.1",
+    "eslint": "^9.39.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.24",
+    "globals": "^16.5.0",
+    "prettier": "^3.6.2",
+    "typescript-eslint": "^8.46.2",
+    "vitest": "^3.2.4"
+  },
+  "allowScripts": {
+    "argon2@0.44.0": true,
+    "@prisma/client@6.19.3": true,
+    "prisma@6.19.3": true,
+    "@prisma/engines@6.19.3": true,
+    "esbuild@0.28.2": true
+  }
+}

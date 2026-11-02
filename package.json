@@ -9,7 +9,8 @@
   ],
   "scripts": {
     "dev": "concurrently -k -n api,web -c yellow,cyan \"npm run dev -w @shopsphere/api\" \"npm run dev -w @shopsphere/web\"",
-    "build": "npm run build -w @shopsphere/api && npm run build -w @shopsphere/web",
+    "build": "npm run build -w @shopsphere/api && npm run build -w @shopsphere/web && node scripts/prepare-vercel.mjs",
+    "build:vercel": "npm run build && node scripts/vercel-production-setup.mjs",
     "start": "npm run db:migrate:deploy -w @shopsphere/api && npm run db:seed -w @shopsphere/api && npm run start -w @shopsphere/api",
     "typecheck": "npm run typecheck -w @shopsphere/api && npm run typecheck -w @shopsphere/web",
     "lint": "eslint apps --ext .ts,.tsx",

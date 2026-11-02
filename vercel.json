@@ -1,0 +1,13 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "npm run build:vercel",
+  "rewrites": [
+    { "source": "/products/:slug", "destination": "/index.html" },
+    { "source": "/compare", "destination": "/index.html" },
+    { "source": "/wishlist", "destination": "/index.html" },
+    { "source": "/saved", "destination": "/index.html" },
+    { "source": "/comparisons/:id", "destination": "/index.html" },
+    { "source": "/sign-in", "destination": "/index.html" },
+    { "source": "/register", "destination": "/index.html" }
+  ]
+}

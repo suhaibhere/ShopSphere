@@ -64,7 +64,7 @@ Requirements: Node.js 20.19+ or 22.12+, npm, and Docker Desktop with its engine 
    docker compose up -d db
    ```
 
-   If you already have PostgreSQL running, skip this step and point `DATABASE_URL` at it. Then generate the Prisma client, apply the migration, and seed the demo catalog:
+   If you already have PostgreSQL running, skip this step and point `DATABASE_URL` at it. Then generate the Prisma client, apply the migration, and seed the source-linked catalog:
 
    ```sh
    npm run db:generate
@@ -87,7 +87,8 @@ Requirements: Node.js 20.19+ or 22.12+, npm, and Docker Desktop with its engine 
 
 | Variable            | Used by | Purpose                                                                                                      |
 | ------------------- | ------- | ------------------------------------------------------------------------------------------------------------ |
-| `DATABASE_URL`      | API     | PostgreSQL connection used by Prisma and the session store.                                                  |
+| `DATABASE_URL`      | API     | Pooled PostgreSQL connection used by Prisma and the session store.                                           |
+| `DIRECT_URL`        | Build   | Direct PostgreSQL connection used for Prisma migrations; falls back to `DATABASE_URL` locally.               |
 | `SESSION_SECRET`    | API     | Signs the opaque session cookie. Use a long random value; production startup refuses to run without it.      |
 | `PORT`              | API     | Host-provided production port; defaults to `API_PORT` (`4000`) locally.                                      |
 | `API_PORT`          | API     | Local fallback port (`4000`) used when `PORT` is unset.                                                      |
@@ -97,16 +98,16 @@ Requirements: Node.js 20.19+ or 22.12+, npm, and Docker Desktop with its engine 
 
 The `.env.example` values are placeholders. Never commit a real `.env`, database password, or session secret.
 
-## Hosted portfolio deployment
+## Free hosted portfolio deployment
 
-The included Railway configuration deploys the API and built web app together, so login cookies stay first-party. Supabase provides hosted PostgreSQL. The API applies migrations and refreshes the curated seed when it starts.
+The app is configured for Vercel Hobby (web + Express function) and Neon Free (PostgreSQL). Vercel serves the built React files on its CDN and runs the API as a serverless Express function on the same site, keeping auth cookies first-party. Each production deployment applies pending database migrations and upserts the curated catalog.
 
-1. Create a Supabase project on the Free plan and copy its PostgreSQL **session pooler** connection string (port 5432) as `DATABASE_URL`. Use the string from Supabase's Connect panel; do not paste it into Git or chat.
-2. Push this repository to a GitHub repository, then create a Railway project from that repo. Railway detects `railway.json` and builds the web app and API.
-3. Add `DATABASE_URL`, a fresh random `SESSION_SECRET` (at least 32 characters), and `NODE_ENV=production` to the Railway service variables. Generate a Railway public domain.
-4. Set `WEB_ORIGIN` to that exact public origin (for example `https://your-app.up.railway.app`, without a trailing slash), then redeploy. Open `/api/health` and the home page to verify.
+1. Create a Neon Free project. Copy the **pooled** connection URL as `DATABASE_URL`, and its **direct** connection URL as `DIRECT_URL`.
+2. Push this repository to a public GitHub repo, connect it to a Vercel Hobby project, and leave the project root set to the repository root. `vercel.json` supplies the build command and client-side routes.
+3. Add `DATABASE_URL`, `DIRECT_URL`, a fresh random `SESSION_SECRET` (at least 32 characters), `WEB_ORIGIN` (the exact production `https://<project>.vercel.app` origin, with no trailing slash), and `NODE_ENV=production` to Vercel's Production environment.
+4. Deploy the production branch. Check `/api/health` and the home page. Product pages are served by the SPA rewrite rules.
 
-Supabase Free currently allows two projects and 500 MB per database, and pauses projects after one week of inactivity. Railway currently offers a $5/30-day trial and then $1/month of free usage credit; this may not keep an always-on service available. Review both providers' current limits before relying on the deployment. Vercel Hobby is free for personal, non-commercial projects, but it is not needed in this single-origin setup. A custom domain costs extra. No paid plan or domain is required by the project configuration.
+Vercel Hobby is $0 for personal, non-commercial projects and currently includes up to 1 million function invocations and 100 GB of fast data transfer monthly. Usage limits can restrict the app until the next cycle; Hobby is not for commercial use. Neon Free currently includes 100 compute-unit-hours and 1 GB of Postgres storage per project. Its database compute sleeps after five idle minutes and wakes on the next request, so the site remains available but the first database-backed request after idle can be slower. This is suitable for a portfolio and modest regular traffic, not unlimited traffic or a guaranteed uptime service. Both providers' limits can change; this setup does not require a paid plan or custom domain.
 
 ## API overview
 

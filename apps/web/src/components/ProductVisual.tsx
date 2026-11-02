@@ -27,7 +27,7 @@ export function ProductVisual({ product }: { product: Product }) {
       className={`product-illustration illustration-${slug}`}
       viewBox="0 0 220 220"
       role="img"
-      aria-label={`${product.category.name} illustration for fictional demo product ${product.name}`}
+      aria-label={`Illustrative ${product.category.name.toLowerCase()} artwork for ${product.name}; not an official product photo`}
     >
       <defs>
         <linearGradient id={gradient} x1="0" x2="1" y1="0" y2="1">

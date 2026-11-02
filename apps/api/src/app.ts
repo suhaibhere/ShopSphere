@@ -51,7 +51,7 @@ export function createApp(
   app.use('/api/auth', authRouter);
   app.use('/api/wishlist', wishlistRouter);
   app.use('/api/comparisons', comparisonsRouter);
-  app.use((_request, response) =>
+  app.use('/api', (_request, response) =>
     response.status(404).json({ error: { message: 'Route not found.' } }),
   );
   const errors: ErrorRequestHandler = (error, _request, response, _next) => {

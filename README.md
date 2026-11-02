@@ -2,12 +2,13 @@
 
 ShopSphere is a product research workspace for discovering a curated catalog, keeping a wishlist, and comparing products side by side. It is designed to help people make considered choices; it does not sell products or process payments.
 
-> **Demo catalog:** all 16 seeded products are fictional. Prices, product names, and specifications are sample data and are not offers or recommendations. The app shows no fabricated customer reviews, ratings, discounts, or sales claims.
+> **Catalog:** the seed contains five real India-market smartphones with official manufacturer or store source links. Prices are reference snapshots checked on 2 November 2026, not live offers; confirm current price and availability at the source. Product artwork is illustrative and is not official product photography. The app does not show customer reviews or ratings.
 
 ## What’s here
 
 - Responsive editorial discovery page with URL-shareable search, category, price, sorting, and pagination controls.
 - Product detail pages with category-specific specifications.
+- Official source links and a checked date for reference prices.
 - A side-by-side comparison for 2–4 products from one category, with differing specifications highlighted.
 - A guest wishlist stored locally; signed-in wishlists and named comparisons stored in PostgreSQL.
 - Registration, login, logout, and session-backed current-user retrieval.
@@ -88,12 +89,24 @@ Requirements: Node.js 20.19+ or 22.12+, npm, and Docker Desktop with its engine 
 | ------------------- | ------- | ------------------------------------------------------------------------------------------------------------ |
 | `DATABASE_URL`      | API     | PostgreSQL connection used by Prisma and the session store.                                                  |
 | `SESSION_SECRET`    | API     | Signs the opaque session cookie. Use a long random value; production startup refuses to run without it.      |
-| `API_PORT`          | API     | API listen port; defaults to `4000`.                                                                         |
+| `PORT`              | API     | Host-provided production port; defaults to `API_PORT` (`4000`) locally.                                      |
+| `API_PORT`          | API     | Local fallback port (`4000`) used when `PORT` is unset.                                                      |
 | `WEB_ORIGIN`        | API     | Exact trusted browser origin for CORS and unsafe-request origin checks; defaults to `http://localhost:5173`. |
-| `VITE_API_BASE_URL` | Web     | Public API URL; defaults to `http://localhost:4000/api`. Never put secrets in `VITE_` variables.             |
+| `VITE_API_BASE_URL` | Web     | API URL; defaults to same-origin `/api`. Never put secrets in `VITE_` variables.                             |
 | `NODE_ENV`          | API     | Set to `production` behind HTTPS to enable secure cookies and proxy handling.                                |
 
 The `.env.example` values are placeholders. Never commit a real `.env`, database password, or session secret.
+
+## Hosted portfolio deployment
+
+The included Railway configuration deploys the API and built web app together, so login cookies stay first-party. Supabase provides hosted PostgreSQL. The API applies migrations and refreshes the curated seed when it starts.
+
+1. Create a Supabase project on the Free plan and copy its PostgreSQL **session pooler** connection string (port 5432) as `DATABASE_URL`. Use the string from Supabase's Connect panel; do not paste it into Git or chat.
+2. Push this repository to a GitHub repository, then create a Railway project from that repo. Railway detects `railway.json` and builds the web app and API.
+3. Add `DATABASE_URL`, a fresh random `SESSION_SECRET` (at least 32 characters), and `NODE_ENV=production` to the Railway service variables. Generate a Railway public domain.
+4. Set `WEB_ORIGIN` to that exact public origin (for example `https://your-app.up.railway.app`, without a trailing slash), then redeploy. Open `/api/health` and the home page to verify.
+
+Supabase Free currently allows two projects and 500 MB per database, and pauses projects after one week of inactivity. Railway currently offers a $5/30-day trial and then $1/month of free usage credit; this may not keep an always-on service available. Review both providers' current limits before relying on the deployment. Vercel Hobby is free for personal, non-commercial projects, but it is not needed in this single-origin setup. A custom domain costs extra. No paid plan or domain is required by the project configuration.
 
 ## API overview
 

@@ -26,6 +26,14 @@ import { api, type Product, type SavedComparison, type User } from './services/a
 import { ProductVisual } from './components/ProductVisual';
 import './features.css';
 
+function formatPrice(price: Product['price'], currency: string) {
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency,
+    maximumFractionDigits: 0,
+  }).format(Number(price));
+}
+
 type AppState = {
   user: User | null;
   wishlist: string[];
@@ -591,13 +599,11 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
           <Heart size={16} fill={saved ? 'currentColor' : 'none'} />
         </button>
         <ProductVisual product={product} />
-        <span className="demo-flag">FICTIONAL DEMO</span>
+        <span className="demo-flag">ILLUSTRATIVE PRODUCT ART</span>
       </div>
       <div className="product-meta">
         <span>{product.brand}</span>
-        <span>
-          {product.currency} {Number(product.price).toLocaleString('en-US')}
-        </span>
+        <span>{formatPrice(product.price, product.currency)}</span>
       </div>
       <h3>
         <Link to={`/products/${product.slug}`}>{product.name}</Link>
@@ -665,17 +671,25 @@ function ProductDetail() {
             PRODUCT NOTE&nbsp; / &nbsp;{product.category.name.toUpperCase()}
           </span>
           <ProductVisual product={product} />
-          <span className="demo-flag">FICTIONAL DEMONSTRATION PRODUCT</span>
+          <span className="demo-flag">ILLUSTRATIVE PRODUCT ART</span>
         </div>
         <div className="detail-copy">
           <p className="eyebrow">
             {product.brand}&nbsp; / &nbsp;{product.category.name}
           </p>
           <h1>{product.name}</h1>
-          <p className="detail-price">
-            {product.currency} {Number(product.price).toLocaleString('en-US')}
-          </p>
+          <p className="detail-price">{formatPrice(product.price, product.currency)}</p>
           <p>{product.description}</p>
+          {product.sourceUrl && (
+            <a
+              className="text-link source-link"
+              href={product.sourceUrl}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Check the official product page <ArrowRight size={13} />
+            </a>
+          )}
           <div className="detail-actions">
             <button className="primary-action" onClick={() => addCompare(product)}>
               <GitCompareArrows size={15} /> Add to comparison
@@ -695,8 +709,12 @@ function ProductDetail() {
             ))}
           </dl>
           <p className="demo-disclaimer">
-            A fictional sample item. Specifications and prices are demonstration data, not
-            purchasing advice.
+            Reference price checked{' '}
+            {product.priceCheckedAt
+              ? new Date(product.priceCheckedAt).toLocaleDateString('en-IN')
+              : 'date unavailable'}
+            . Prices, offers and availability can change. Product artwork is illustrative, not an
+            official product photo.
           </p>
         </div>
       </div>
@@ -785,9 +803,7 @@ function ComparePage() {
                       </div>
                       <span className="eyebrow">{product.brand}</span>
                       <Link to={`/products/${product.slug}`}>{product.name}</Link>
-                      <strong>
-                        {product.currency} {Number(product.price).toLocaleString('en-US')}
-                      </strong>
+                      <strong>{formatPrice(product.price, product.currency)}</strong>
                     </th>
                   ))}
                 </tr>

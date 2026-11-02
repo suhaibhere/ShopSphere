@@ -14,6 +14,8 @@ export type Product = {
   price: string | number;
   currency: string;
   imageUrl: string | null;
+  sourceUrl: string | null;
+  priceCheckedAt: string | null;
   specifications: Record<string, string>;
   category: Category;
 };
@@ -25,7 +27,7 @@ export type SavedComparison = {
   updatedAt: string;
 };
 
-const baseUrl = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:4000/api';
+const baseUrl = import.meta.env.VITE_API_BASE_URL ?? '/api';
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const response = await fetch(`${baseUrl}${path}`, {

@@ -17,6 +17,8 @@ const sample = {
   price: '649.00',
   currency: 'USD',
   imageUrl: null,
+  sourceUrl: null,
+  priceCheckedAt: null,
   specifications: { Display: '6.2 in OLED', Storage: '256 GB' },
   category: {
     id: 'category-1',
@@ -45,7 +47,7 @@ describe('discovery journey', () => {
     expect(await screen.findByRole('link', { name: 'Forma One' })).toBeInTheDocument();
     expect(
       screen.getByRole('img', {
-        name: 'Smartphones illustration for fictional demo product Forma One',
+        name: 'Illustrative smartphones artwork for Forma One; not an official product photo',
       }),
     ).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Add Forma One to comparison' }));

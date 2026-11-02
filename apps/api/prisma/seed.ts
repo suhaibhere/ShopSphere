@@ -2,280 +2,124 @@ import '../src/load-env.js';
 import { PrismaClient } from '@prisma/client';
 
 const db = new PrismaClient();
+const checkedAt = new Date('2026-11-02T00:00:00.000Z');
 
-const catalog = [
+// Reference prices and key specifications are taken from official India product pages.
+// They are a snapshot, not a live price feed; update this catalog before treating prices as current.
+const products = [
   {
-    name: 'Smartphones',
-    slug: 'smartphones',
-    description: 'Pocket-sized tools for the everyday.',
-    products: [
-      [
-        'Forma One',
-        'Aster',
-        649,
-        {
-          Display: '6.2 in OLED',
-          Processor: 'Aster A1',
-          RAM: '8 GB',
-          Storage: '256 GB',
-          Battery: '4,500 mAh',
-          OS: 'FormaOS 4',
-        },
-      ],
-      [
-        'Forma One Mini',
-        'Aster',
-        529,
-        {
-          Display: '5.9 in OLED',
-          Processor: 'Aster A1',
-          RAM: '8 GB',
-          Storage: '128 GB',
-          Battery: '4,100 mAh',
-          OS: 'FormaOS 4',
-        },
-      ],
-      [
-        'North S',
-        'Northstar',
-        799,
-        {
-          Display: '6.5 in AMOLED',
-          Processor: 'North N2',
-          RAM: '12 GB',
-          Storage: '256 GB',
-          Battery: '5,000 mAh',
-          OS: 'North OS 3',
-        },
-      ],
-      [
-        'North S Lite',
-        'Northstar',
-        479,
-        {
-          Display: '6.3 in AMOLED',
-          Processor: 'North N1',
-          RAM: '8 GB',
-          Storage: '128 GB',
-          Battery: '4,800 mAh',
-          OS: 'North OS 3',
-        },
-      ],
-    ],
+    name: 'iPhone 16 (128 GB)',
+    slug: 'iphone-16-128gb',
+    brand: 'Apple',
+    price: 89900,
+    description:
+      'Apple iPhone 16 with 128 GB storage. Listed at the official Apple India Store; final price and availability can change.',
+    sourceUrl: 'https://www.apple.com/in/shop/buy-iphone/iphone-16',
+    imageUrl: null,
+    specifications: {
+      Display: '6.1-inch Super Retina XDR',
+      Storage: '128 GB',
+      'Main camera': '48 MP Fusion',
+      Chip: 'A18',
+      Source: 'Apple India Store',
+    },
   },
   {
-    name: 'Laptops',
-    slug: 'laptops',
-    description: 'Considered machines for work and making.',
-    products: [
-      [
-        'Atelier 14',
-        'Atelier',
-        1299,
-        {
-          Processor: 'Atelier A4',
-          RAM: '16 GB',
-          Storage: '512 GB SSD',
-          Display: '14 in, 2.8K',
-          Graphics: 'Integrated A4',
-          OS: 'AtelierOS',
-        },
-      ],
-      [
-        'Atelier 14 Air',
-        'Atelier',
-        1099,
-        {
-          Processor: 'Atelier A3',
-          RAM: '16 GB',
-          Storage: '512 GB SSD',
-          Display: '14 in, 2.5K',
-          Graphics: 'Integrated A3',
-          OS: 'AtelierOS',
-        },
-      ],
-      [
-        'Fieldbook 15',
-        'Fieldwork',
-        1199,
-        {
-          Processor: 'Field F7',
-          RAM: '32 GB',
-          Storage: '1 TB SSD',
-          Display: '15 in, 2.8K',
-          Graphics: 'Integrated F7',
-          OS: 'Fieldwork Linux',
-        },
-      ],
-      [
-        'Fieldbook 13',
-        'Fieldwork',
-        949,
-        {
-          Processor: 'Field F5',
-          RAM: '16 GB',
-          Storage: '512 GB SSD',
-          Display: '13.5 in, 2.2K',
-          Graphics: 'Integrated F5',
-          OS: 'Fieldwork Linux',
-        },
-      ],
-    ],
+    name: 'Pixel 10a (128 GB)',
+    slug: 'google-pixel-10a-128gb',
+    brand: 'Google',
+    price: 55999,
+    description:
+      'Google Pixel 10a. The official Google Store India page lists ₹55,999 as the regular price; time-limited offers may differ.',
+    sourceUrl: 'https://store.google.com/in/product/pixel_10a?hl=en-IN',
+    imageUrl: null,
+    specifications: {
+      Display: '6.3-inch Actua',
+      Storage: '128 GB',
+      'Main camera': '48 MP wide + 13 MP ultrawide',
+      'Software support': '7 years of OS and security updates',
+      Source: 'Google Store India',
+    },
   },
   {
-    name: 'Headphones',
-    slug: 'headphones',
-    description: 'Quietly capable listening companions.',
-    products: [
-      [
-        'Still H1',
-        'Still',
-        329,
-        {
-          Type: 'Over-ear',
-          Connectivity: 'Bluetooth 5.3',
-          'Battery life': '38 hours',
-          'Noise cancellation': 'Adaptive',
-          Weight: '258 g',
-        },
-      ],
-      [
-        'Still H1 Studio',
-        'Still',
-        399,
-        {
-          Type: 'Over-ear',
-          Connectivity: 'Bluetooth 5.3, USB-C',
-          'Battery life': '42 hours',
-          'Noise cancellation': 'Adaptive',
-          Weight: '274 g',
-        },
-      ],
-      [
-        'Morrow Loop',
-        'Morrow',
-        219,
-        {
-          Type: 'On-ear',
-          Connectivity: 'Bluetooth 5.2',
-          'Battery life': '30 hours',
-          'Noise cancellation': 'Passive',
-          Weight: '196 g',
-        },
-      ],
-      [
-        'Morrow Loop Pro',
-        'Morrow',
-        279,
-        {
-          Type: 'Over-ear',
-          Connectivity: 'Bluetooth 5.3',
-          'Battery life': '36 hours',
-          'Noise cancellation': 'Hybrid',
-          Weight: '231 g',
-        },
-      ],
-    ],
+    name: 'Pixel 10 (128 GB)',
+    slug: 'google-pixel-10-128gb',
+    brand: 'Google',
+    price: 79999,
+    description:
+      'Google Pixel 10. The Google Store India offers page lists ₹79,999; promotions and availability can change.',
+    sourceUrl: 'https://store.google.com/in/product/pixel_10?hl=en-IN',
+    imageUrl: null,
+    specifications: {
+      Display: '6.3-inch Actua',
+      Storage: '128 GB',
+      'Main camera': 'Triple rear camera',
+      Source: 'Google Store India',
+    },
   },
   {
-    name: 'Smartwatches',
-    slug: 'smartwatches',
-    description: 'Useful information, always at hand.',
-    products: [
-      [
-        'Tempo 2',
-        'Tempo',
-        249,
-        {
-          Display: '1.8 in AMOLED',
-          'Battery life': '7 days',
-          Connectivity: 'Bluetooth, GPS',
-          'Water resistance': '5 ATM',
-          Compatibility: 'iOS, Android',
-        },
-      ],
-      [
-        'Tempo 2 Field',
-        'Tempo',
-        319,
-        {
-          Display: '1.9 in AMOLED',
-          'Battery life': '12 days',
-          Connectivity: 'Bluetooth, GPS, NFC',
-          'Water resistance': '10 ATM',
-          Compatibility: 'iOS, Android',
-        },
-      ],
-      [
-        'Arc Watch',
-        'Arc',
-        299,
-        {
-          Display: '1.7 in OLED',
-          'Battery life': '5 days',
-          Connectivity: 'Bluetooth, GPS',
-          'Water resistance': '5 ATM',
-          Compatibility: 'iOS',
-        },
-      ],
-      [
-        'Arc Watch Lite',
-        'Arc',
-        189,
-        {
-          Display: '1.6 in OLED',
-          'Battery life': '8 days',
-          Connectivity: 'Bluetooth',
-          'Water resistance': '3 ATM',
-          Compatibility: 'iOS, Android',
-        },
-      ],
-    ],
+    name: 'OnePlus Nord 5 (base configuration)',
+    slug: 'oneplus-nord-5',
+    brand: 'OnePlus',
+    price: 33999,
+    description:
+      'OnePlus Nord 5. OnePlus India lists a starting price of ₹33,999; check the official page for current configuration and stock.',
+    sourceUrl: 'https://www.oneplus.in/nord-5',
+    imageUrl: null,
+    specifications: {
+      Display: '1.5K AMOLED, up to 144 Hz',
+      Processor: 'Snapdragon 8-series platform',
+      Battery: '6,800 mAh',
+      Charging: '80 W SUPERVOOC',
+      Source: 'OnePlus India',
+    },
   },
-] as const;
-
-function slugify(value: string) {
-  return value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '');
-}
+  {
+    name: 'Galaxy S25 (128 GB)',
+    slug: 'samsung-galaxy-s25-128gb',
+    brand: 'Samsung',
+    price: 69999,
+    description:
+      'Samsung Galaxy S25 with 128 GB storage. Samsung India lists ₹69,999 for this storage option; offers and stock can change.',
+    sourceUrl: 'https://www.samsung.com/in/smartphones/galaxy-s25/buy/',
+    imageUrl: null,
+    specifications: {
+      Display: '6.2-inch Dynamic AMOLED 2X',
+      Storage: '128 GB',
+      RAM: '12 GB',
+      Source: 'Samsung India',
+    },
+  },
+];
 
 async function main() {
-  for (const category of catalog) {
-    const savedCategory = await db.category.upsert({
-      where: { slug: category.slug },
-      update: { name: category.name, description: category.description },
-      create: { name: category.name, slug: category.slug, description: category.description },
+  const category = await db.category.upsert({
+    where: { slug: 'smartphones' },
+    update: {
+      name: 'Smartphones',
+      description: 'India-market phones with source-linked product details and reference prices.',
+    },
+    create: {
+      name: 'Smartphones',
+      slug: 'smartphones',
+      description: 'India-market phones with source-linked product details and reference prices.',
+    },
+  });
+
+  // Remove only the old fictional starter catalog so it cannot be mistaken for real inventory.
+  const fictional = { description: { contains: 'fictional demonstration product' } };
+  await db.comparisonItem.deleteMany({ where: { product: fictional } });
+  await db.product.deleteMany({ where: fictional });
+  await db.category.deleteMany({ where: { products: { none: {} }, slug: { not: 'smartphones' } } });
+
+  for (const product of products) {
+    await db.product.upsert({
+      where: { slug: product.slug },
+      update: { ...product, currency: 'INR', categoryId: category.id, priceCheckedAt: checkedAt },
+      create: { ...product, currency: 'INR', categoryId: category.id, priceCheckedAt: checkedAt },
     });
-    for (const [name, brand, price, specifications] of category.products) {
-      const slug = slugify(name);
-      const description = `${name} is a fictional demonstration product created for ShopSphere. Product details are sample data for discovery and comparison practice.`;
-      await db.product.upsert({
-        where: { slug },
-        update: {
-          name,
-          brand,
-          price,
-          description,
-          categoryId: savedCategory.id,
-          specifications,
-          imageUrl: null,
-        },
-        create: {
-          name,
-          slug,
-          brand,
-          price,
-          description,
-          categoryId: savedCategory.id,
-          specifications,
-          currency: 'USD',
-        },
-      });
-    }
   }
-  console.log('Seeded 4 categories and 16 fictional demo products.');
+  console.log(`Seeded ${products.length} real, source-linked India smartphone listings.`);
 }
 
 main().finally(() => db.$disconnect());

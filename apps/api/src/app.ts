@@ -3,6 +3,9 @@ import cors from 'cors';
 import express, { type ErrorRequestHandler } from 'express';
 import session from 'express-session';
 import helmet from 'helmet';
+import { readFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { authRouter } from './routes/auth.js';
 import { categoriesRouter } from './routes/categories.js';
 import { comparisonsRouter } from './routes/comparisons.js';
@@ -13,12 +16,37 @@ import { requireSameOrigin } from './middleware/auth.js';
 const PgSessionStore = connectPgSimple(session);
 const production = process.env.NODE_ENV === 'production';
 const webOrigin = process.env.WEB_ORIGIN ?? 'http://localhost:5173';
+const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
+const supabaseRootCertificate = readFileSync(
+  resolve(projectRoot, 'certs/supabase-root.crt'),
+  'utf8',
+);
+
+function createSessionStore() {
+  const connectionString = process.env.SESSION_DATABASE_URL ?? process.env.DATABASE_URL;
+  if (!connectionString) {
+    return new PgSessionStore({ createTableIfMissing: true });
+  }
+
+  const connectionUrl = new URL(connectionString);
+  if (connectionUrl.hostname.endsWith('.pooler.supabase.com')) {
+    connectionUrl.searchParams.delete('sslmode');
+    connectionUrl.searchParams.delete('sslrootcert');
+    connectionUrl.searchParams.delete('sslcert');
+    return new PgSessionStore({
+      conObject: {
+        connectionString: connectionUrl.toString(),
+        ssl: { ca: supabaseRootCertificate },
+      },
+      createTableIfMissing: true,
+    });
+  }
+
+  return new PgSessionStore({ conString: connectionString, createTableIfMissing: true });
+}
 
 export function createApp(
-  store: session.Store = new PgSessionStore({
-    conString: process.env.SESSION_DATABASE_URL ?? process.env.DATABASE_URL,
-    createTableIfMissing: true,
-  }),
+  store: session.Store = createSessionStore(),
 ) {
   const app = express();
   app.disable('x-powered-by');

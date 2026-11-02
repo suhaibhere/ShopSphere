@@ -103,10 +103,19 @@ The `.env.example` values are placeholders. Never commit a real `.env`, database
 
 The app is configured for Vercel Hobby (web + Express function) and Supabase Free (PostgreSQL). Vercel serves the built React files on its CDN and runs the API as a serverless Express function on the same site, keeping auth cookies first-party. Each production deployment applies pending database migrations and upserts the curated catalog.
 
-1. Create a Supabase Free project. From its Connect panel, copy the **Transaction pooler** URL (port `6543`) as `DATABASE_URL`, and the IPv4-compatible **Session pooler** URL (port `5432`) as both `DIRECT_URL` and `SESSION_DATABASE_URL`. Add `pgbouncer=true&connection_limit=1` to the `DATABASE_URL` query string for Prisma serverless connections.
-2. Push this repository to a public GitHub repo, connect it to a Vercel Hobby project, and leave the project root set to the repository root. `vercel.json` supplies the build command and client-side routes.
-3. Add `DATABASE_URL`, `DIRECT_URL`, `SESSION_DATABASE_URL`, a fresh random `SESSION_SECRET` (at least 32 characters), `WEB_ORIGIN` (the exact production `https://<project>.vercel.app` origin, with no trailing slash), and `NODE_ENV=production` to Vercel's Production environment.
-4. Deploy the production branch. Check `/api/health` and the home page. Product pages are served by the SPA rewrite rules.
+1. Create a Supabase Free project. For this project, use the shared pooler because it is IPv4-compatible. This project was created in the default **West EU (Ireland)** region; its project reference is `orcbxehxymmvtvwzdaeb` and shared pooler host is `aws-0-eu-west-1.pooler.supabase.com`.
+2. From the repository root, run `powershell -ExecutionPolicy Bypass -File .\scripts\configure-supabase.ps1`. Enter the database password at the hidden password prompt. The script writes the transaction-pooler URL to `DATABASE_URL` and session-pooler URLs to `DIRECT_URL` and `SESSION_DATABASE_URL` in the ignored `.env` file. The API verifies Supabase's TLS certificate using the included public root certificate. The script percent-encodes special password characters and never prints the password.
+3. Apply the schema and seed the initial catalog:
+
+   ```sh
+   npm run db:generate
+   npm run db:migrate:deploy -w @shopsphere/api
+   npm run db:seed
+   ```
+
+4. Push this repository to a public GitHub repo, connect it to a Vercel Hobby project, and leave the project root set to the repository root. `vercel.json` supplies the build command and client-side routes.
+5. Add `DATABASE_URL`, `DIRECT_URL`, `SESSION_DATABASE_URL`, a fresh random `SESSION_SECRET` (at least 32 characters), `WEB_ORIGIN` (the exact production `https://<project>.vercel.app` origin, with no trailing slash), and `NODE_ENV=production` to Vercel's Production environment. Do not reuse the database password as `SESSION_SECRET`.
+6. Deploy the production branch. Check `/api/health` and the home page. Product pages are served by the SPA rewrite rules.
 
 Vercel Hobby is $0 for personal, non-commercial projects and currently includes up to 1 million function invocations and 100 GB of fast data transfer monthly. Supabase Free currently includes 500 MB of database storage, 50,000 monthly active users, and 5 GB each of cached and uncached egress. Supabase can pause a Free project after a week with too little database activity; a few real app requests daily are usually enough to keep it active, but this is not guaranteed. Usage limits can restrict service. This is suitable for a portfolio and modest regular traffic, not unlimited traffic or a guaranteed uptime service. Both providers' limits can change; this setup does not require a paid plan or custom domain.
 
@@ -151,9 +160,9 @@ npm run build
 
 The API tests mock database calls for catalog validation, pagination, health, and unauthenticated access. The web test covers a catalog-to-comparison interaction. Use a configured database to exercise migrations, seed, registration, persistence, and cross-session behavior manually.
 
-## Deployment preparation
+## Deployment status
 
-The repository is structured for a separately hosted web app and Node API backed by PostgreSQL, but it has not been deployed. No provider is selected here: check current pricing, trial limits, payment-card requirements, region availability, and connection-pooling behavior before choosing a host. Set production environment variables in the host’s secret manager, configure the exact `WEB_ORIGIN`, use HTTPS, and ensure the database connection supports the PostgreSQL session store. Do not commit production credentials. Do not use Render for this project.
+A Supabase Free project is connected. The two migrations have been applied and the catalog is seeded with five product listings. The GitHub remote and Vercel project still need to be connected before the public deployment. Keep database credentials and session secrets in local `.env` or the hosting provider's secret settings; never commit them. The free plan is suitable for a portfolio and modest regular use, with provider usage limits and possible project pausing during inactivity.
 
 ## Screenshots
 
@@ -162,7 +171,7 @@ The local application now has seeded API-backed data. Add genuine screenshots af
 ## Current limitations and next steps
 
 - A local PostgreSQL container and ignored `.env` are configured in this checkout; another developer will need to create their own `.env` before running the database-backed flows.
-- Catalog products are fictional demo data with original in-app SVG illustrations; there are no real product photographs, reviews, ratings, purchases, or external retail links.
+- Catalog products are real India-market smartphones with reference prices and official source links. The product artwork is illustrative; there are no official product photographs, reviews, ratings, or live retailer offers.
 - The current dependency audit flags a high-severity advisory in the Prisma 6 development CLI’s `deepmerge-ts` dependency. The suggested automatic fix jumps to Prisma 7, so the CLI remains on the tested Prisma 6 line pending a deliberate upgrade and migration check.
-- Deployment configuration and provider selection remain to be completed after checking current platform requirements.
+- GitHub remote and Vercel deployment remain to be completed.
 - A production deployment should also choose a deployment-specific session-secret rotation and database backup process.

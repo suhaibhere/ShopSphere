@@ -1,6 +1,11 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "npm run build:vercel",
+  "functions": {
+    "index.ts": {
+      "includeFiles": "certs/supabase-root.crt"
+    }
+  },
   "rewrites": [
     { "source": "/products/:slug", "destination": "/index.html" },
     { "source": "/compare", "destination": "/index.html" },

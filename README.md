@@ -85,29 +85,30 @@ Requirements: Node.js 20.19+ or 22.12+, npm, and Docker Desktop with its engine 
 
 ## Environment variables
 
-| Variable            | Used by | Purpose                                                                                                      |
-| ------------------- | ------- | ------------------------------------------------------------------------------------------------------------ |
-| `DATABASE_URL`      | API     | Pooled PostgreSQL connection used by Prisma and the session store.                                           |
-| `DIRECT_URL`        | Build   | Direct PostgreSQL connection used for Prisma migrations; falls back to `DATABASE_URL` locally.               |
-| `SESSION_SECRET`    | API     | Signs the opaque session cookie. Use a long random value; production startup refuses to run without it.      |
-| `PORT`              | API     | Host-provided production port; defaults to `API_PORT` (`4000`) locally.                                      |
-| `API_PORT`          | API     | Local fallback port (`4000`) used when `PORT` is unset.                                                      |
-| `WEB_ORIGIN`        | API     | Exact trusted browser origin for CORS and unsafe-request origin checks; defaults to `http://localhost:5173`. |
-| `VITE_API_BASE_URL` | Web     | API URL; defaults to same-origin `/api`. Never put secrets in `VITE_` variables.                             |
-| `NODE_ENV`          | API     | Set to `production` behind HTTPS to enable secure cookies and proxy handling.                                |
+| Variable               | Used by | Purpose                                                                                                      |
+| ---------------------- | ------- | ------------------------------------------------------------------------------------------------------------ |
+| `DATABASE_URL`         | API     | Transaction-pooled PostgreSQL URL used by Prisma on Vercel.                                                  |
+| `DIRECT_URL`           | Build   | Session-pooled PostgreSQL URL used for Prisma migrations; falls back to `DATABASE_URL` locally.              |
+| `SESSION_DATABASE_URL` | API     | Session-pooled PostgreSQL URL for login sessions; falls back to `DATABASE_URL` locally.                      |
+| `SESSION_SECRET`       | API     | Signs the opaque session cookie. Use a long random value; production startup refuses to run without it.      |
+| `PORT`                 | API     | Host-provided production port; defaults to `API_PORT` (`4000`) locally.                                      |
+| `API_PORT`             | API     | Local fallback port (`4000`) used when `PORT` is unset.                                                      |
+| `WEB_ORIGIN`           | API     | Exact trusted browser origin for CORS and unsafe-request origin checks; defaults to `http://localhost:5173`. |
+| `VITE_API_BASE_URL`    | Web     | API URL; defaults to same-origin `/api`. Never put secrets in `VITE_` variables.                             |
+| `NODE_ENV`             | API     | Set to `production` behind HTTPS to enable secure cookies and proxy handling.                                |
 
 The `.env.example` values are placeholders. Never commit a real `.env`, database password, or session secret.
 
 ## Free hosted portfolio deployment
 
-The app is configured for Vercel Hobby (web + Express function) and Neon Free (PostgreSQL). Vercel serves the built React files on its CDN and runs the API as a serverless Express function on the same site, keeping auth cookies first-party. Each production deployment applies pending database migrations and upserts the curated catalog.
+The app is configured for Vercel Hobby (web + Express function) and Supabase Free (PostgreSQL). Vercel serves the built React files on its CDN and runs the API as a serverless Express function on the same site, keeping auth cookies first-party. Each production deployment applies pending database migrations and upserts the curated catalog.
 
-1. Create a Neon Free project. Copy the **pooled** connection URL as `DATABASE_URL`, and its **direct** connection URL as `DIRECT_URL`.
+1. Create a Supabase Free project. From its Connect panel, copy the **Transaction pooler** URL (port `6543`) as `DATABASE_URL`, and the IPv4-compatible **Session pooler** URL (port `5432`) as both `DIRECT_URL` and `SESSION_DATABASE_URL`. Add `pgbouncer=true&connection_limit=1` to the `DATABASE_URL` query string for Prisma serverless connections.
 2. Push this repository to a public GitHub repo, connect it to a Vercel Hobby project, and leave the project root set to the repository root. `vercel.json` supplies the build command and client-side routes.
-3. Add `DATABASE_URL`, `DIRECT_URL`, a fresh random `SESSION_SECRET` (at least 32 characters), `WEB_ORIGIN` (the exact production `https://<project>.vercel.app` origin, with no trailing slash), and `NODE_ENV=production` to Vercel's Production environment.
+3. Add `DATABASE_URL`, `DIRECT_URL`, `SESSION_DATABASE_URL`, a fresh random `SESSION_SECRET` (at least 32 characters), `WEB_ORIGIN` (the exact production `https://<project>.vercel.app` origin, with no trailing slash), and `NODE_ENV=production` to Vercel's Production environment.
 4. Deploy the production branch. Check `/api/health` and the home page. Product pages are served by the SPA rewrite rules.
 
-Vercel Hobby is $0 for personal, non-commercial projects and currently includes up to 1 million function invocations and 100 GB of fast data transfer monthly. Usage limits can restrict the app until the next cycle; Hobby is not for commercial use. Neon Free currently includes 100 compute-unit-hours and 1 GB of Postgres storage per project. Its database compute sleeps after five idle minutes and wakes on the next request, so the site remains available but the first database-backed request after idle can be slower. This is suitable for a portfolio and modest regular traffic, not unlimited traffic or a guaranteed uptime service. Both providers' limits can change; this setup does not require a paid plan or custom domain.
+Vercel Hobby is $0 for personal, non-commercial projects and currently includes up to 1 million function invocations and 100 GB of fast data transfer monthly. Supabase Free currently includes 500 MB of database storage, 50,000 monthly active users, and 5 GB each of cached and uncached egress. Supabase can pause a Free project after a week with too little database activity; a few real app requests daily are usually enough to keep it active, but this is not guaranteed. Usage limits can restrict service. This is suitable for a portfolio and modest regular traffic, not unlimited traffic or a guaranteed uptime service. Both providers' limits can change; this setup does not require a paid plan or custom domain.
 
 ## API overview
 

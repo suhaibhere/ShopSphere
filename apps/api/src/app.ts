@@ -16,7 +16,7 @@ const webOrigin = process.env.WEB_ORIGIN ?? 'http://localhost:5173';
 
 export function createApp(
   store: session.Store = new PgSessionStore({
-    conString: process.env.DATABASE_URL,
+    conString: process.env.SESSION_DATABASE_URL ?? process.env.DATABASE_URL,
     createTableIfMissing: true,
   }),
 ) {

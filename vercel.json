@@ -2,7 +2,7 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "npm run build:vercel",
   "functions": {
-    "index.ts": {
+    "api/**/*.ts": {
       "includeFiles": "certs/supabase-root.crt"
     }
   },

@@ -17,7 +17,10 @@ import {
   GitCompareArrows,
   Heart,
   Menu,
+  Minus,
+  Plus,
   Search,
+  ShoppingCart,
   SlidersHorizontal,
   Trash2,
   X,
@@ -34,10 +37,36 @@ function formatPrice(price: Product['price'], currency: string) {
   }).format(Number(price));
 }
 
+const CART_KEY = 'shopsphere.cart';
+const MAX_CART_QUANTITY = 10;
+type CartContents = Record<string, number>;
+
+function readCart(): CartContents {
+  try {
+    const value: unknown = JSON.parse(localStorage.getItem(CART_KEY) ?? '{}');
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+    const cart: CartContents = {};
+    for (const [slug, quantity] of Object.entries(value)) {
+      if (typeof quantity === 'number' && Number.isInteger(quantity) && quantity > 0) {
+        cart[slug] = Math.min(quantity, MAX_CART_QUANTITY);
+      }
+    }
+    return cart;
+  } catch {
+    return {};
+  }
+}
+
 type AppState = {
   user: User | null;
   wishlist: string[];
   compare: Product[];
+  cart: CartContents;
+  cartCount: number;
+  addToCart: (product: Product) => void;
+  setCartQuantity: (slug: string, quantity: number) => void;
+  removeFromCart: (slug: string) => void;
+  clearCart: () => void;
   notice: string;
   setNotice: (message: string) => void;
   toggleWishlist: (product: Product) => Promise<void>;
@@ -70,7 +99,37 @@ function App() {
   const [user, setUser] = useState<User | null>(null);
   const [wishlist, setWishlist] = useState<string[]>(() => readList('shopsphere.wishlist'));
   const [compare, setCompare] = useState<Product[]>([]);
+  const [cart, setCart] = useState<CartContents>(readCart);
   const [notice, setNotice] = useState('');
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(CART_KEY, JSON.stringify(cart));
+    } catch {
+      // Storage can be unavailable (private mode); the cart still works for this visit.
+    }
+  }, [cart]);
+
+  function addToCart(product: Product) {
+    const current = cart[product.slug] ?? 0;
+    if (current >= MAX_CART_QUANTITY) {
+      setNotice(`You can keep up to ${MAX_CART_QUANTITY} of one product in your cart.`);
+      return;
+    }
+    setCart({ ...cart, [product.slug]: current + 1 });
+    setNotice(`${product.name} added to your cart.`);
+  }
+  function setCartQuantity(slug: string, quantity: number) {
+    if (quantity < 1) return removeFromCart(slug);
+    setCart((items) => ({ ...items, [slug]: Math.min(quantity, MAX_CART_QUANTITY) }));
+  }
+  function removeFromCart(slug: string) {
+    setCart((items) => {
+      const { [slug]: _removed, ...rest } = items;
+      return rest;
+    });
+  }
+  const cartCount = Object.values(cart).reduce((total, quantity) => total + quantity, 0);
 
   useEffect(() => {
     let active = true;
@@ -178,6 +237,12 @@ function App() {
     user,
     wishlist,
     compare,
+    cart,
+    cartCount,
+    addToCart,
+    setCartQuantity,
+    removeFromCart,
+    clearCart: () => setCart({}),
     notice,
     setNotice,
     toggleWishlist,
@@ -195,7 +260,7 @@ function App() {
 }
 
 function SiteLayout() {
-  const { user, compare, notice, setNotice, logout } = useApp();
+  const { user, compare, cartCount, notice, setNotice, logout } = useApp();
   const [mobileOpen, setMobileOpen] = useState(false);
   return (
     <div id="top" className="app-shell">
@@ -227,6 +292,14 @@ function SiteLayout() {
           <Link aria-label="Wishlist" to="/wishlist">
             <Heart size={17} />
           </Link>
+          <Link
+            className="cart-link"
+            aria-label={`Cart, ${cartCount} ${cartCount === 1 ? 'item' : 'items'}`}
+            to="/cart"
+          >
+            <ShoppingCart size={17} />
+            {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
+          </Link>
           {user ? (
             <button className="sign-in" onClick={() => void logout()}>
               Sign out <ArrowRight size={14} />
@@ -251,6 +324,7 @@ function SiteLayout() {
         <Route path="/products/:slug" element={<ProductDetail />} />
         <Route path="/compare" element={<ComparePage />} />
         <Route path="/wishlist" element={<WishlistPage />} />
+        <Route path="/cart" element={<CartPage />} />
         <Route path="/saved" element={<SavedPage />} />
         <Route path="/comparisons/:id" element={<LoadSavedComparison />} />
         <Route path="/sign-in" element={<AuthPage mode="login" />} />
@@ -582,8 +656,9 @@ function Discover() {
 }
 
 function ProductCard({ product, index }: { product: Product; index: number }) {
-  const { wishlist, toggleWishlist, compare, addCompare } = useApp();
+  const { wishlist, toggleWishlist, compare, addCompare, cart, addToCart } = useApp();
   const saved = wishlist.includes(product.slug);
+  const inCart = cart[product.slug] ?? 0;
   const selected = compare.some((item) => item.id === product.id);
   return (
     <article className="product-card">
@@ -623,6 +698,13 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
           {selected ? 'Added' : 'Compare'}
         </button>
       </div>
+      <button
+        className={inCart ? 'cart-add in-cart' : 'cart-add'}
+        onClick={() => addToCart(product)}
+        aria-label={`Add ${product.name} to cart`}
+      >
+        <ShoppingCart size={14} /> {inCart ? `In cart (${inCart}) · add another` : 'Add to cart'}
+      </button>
     </article>
   );
 }
@@ -631,7 +713,7 @@ function ProductDetail() {
   const { slug = '' } = useParams();
   const [product, setProduct] = useState<Product | null>(null);
   const [error, setError] = useState('');
-  const { wishlist, toggleWishlist, addCompare } = useApp();
+  const { wishlist, toggleWishlist, addCompare, cart, addToCart } = useApp();
   useEffect(() => {
     let active = true;
     api
@@ -691,7 +773,11 @@ function ProductDetail() {
             </a>
           )}
           <div className="detail-actions">
-            <button className="primary-action" onClick={() => addCompare(product)}>
+            <button className="primary-action" onClick={() => addToCart(product)}>
+              <ShoppingCart size={15} />{' '}
+              {cart[product.slug] ? `In cart (${cart[product.slug]}) · add another` : 'Add to cart'}
+            </button>
+            <button className="secondary-action" onClick={() => addCompare(product)}>
               <GitCompareArrows size={15} /> Add to comparison
             </button>
             <button className="secondary-action" onClick={() => void toggleWishlist(product)}>
@@ -897,6 +983,143 @@ function WishlistPage() {
           {products.map((product, index) => (
             <ProductCard key={product.id} product={product} index={index} />
           ))}
+        </div>
+      )}
+    </main>
+  );
+}
+
+function CartPage() {
+  const { cart, setCartQuantity, removeFromCart, clearCart } = useApp();
+  const [products, setProducts] = useState<Product[] | null>(null);
+  const [error, setError] = useState('');
+  const slugs = Object.keys(cart).sort().join('|');
+  useEffect(() => {
+    if (!slugs) {
+      setProducts([]);
+      return;
+    }
+    let active = true;
+    api
+      .products('pageSize=48')
+      .then(({ items }) => {
+        if (!active) return;
+        const wanted = slugs.split('|');
+        const found = items.filter((product) => wanted.includes(product.slug));
+        setProducts(found);
+        // Drop products that no longer exist in the catalog so the cart count stays honest.
+        for (const slug of wanted) {
+          if (!found.some((product) => product.slug === slug)) removeFromCart(slug);
+        }
+      })
+      .catch((issue) => {
+        if (active) setError(issue instanceof Error ? issue.message : 'Could not load your cart.');
+      });
+    return () => {
+      active = false;
+    };
+    // removeFromCart only updates state through a functional setter, so it is safe to omit.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slugs]);
+
+  const lines = (products ?? []).filter((product) => cart[product.slug]);
+  const subtotal = lines.reduce(
+    (total, product) => total + Number(product.price) * (cart[product.slug] ?? 0),
+    0,
+  );
+  const currency = lines[0]?.currency ?? 'INR';
+  return (
+    <main className="wrap page-content">
+      <div className="page-heading">
+        <div>
+          <p className="eyebrow">YOUR EDIT&nbsp; / &nbsp;CART</p>
+          <h1>
+            Your <em>cart.</em>
+          </h1>
+        </div>
+      </div>
+      <p className="page-intro">
+        A shortlist of what you plan to buy. ShopSphere doesn’t sell products or take payments, so
+        use each official link to check the current price and complete your purchase.
+      </p>
+      {error && <p className="inline-error">{error}</p>}
+      {products === null && !error && <p className="loading-state">Loading your cart…</p>}
+      {products !== null && !error && !lines.length && (
+        <div className="state-message">
+          <strong>Your cart is empty.</strong>
+          <span>Add a product while you browse and it will appear here.</span>
+          <Link to="/" className="text-link">
+            Browse the collection <ArrowRight size={14} />
+          </Link>
+        </div>
+      )}
+      {lines.length > 0 && (
+        <div className="cart-layout">
+          <ul className="cart-list">
+            {lines.map((product) => {
+              const quantity = cart[product.slug] ?? 1;
+              return (
+                <li key={product.id} className="cart-line">
+                  <div className="cart-line-info">
+                    <span className="cart-line-brand">{product.brand}</span>
+                    <Link to={`/products/${product.slug}`} className="cart-line-name">
+                      {product.name}
+                    </Link>
+                    <span className="cart-line-unit">
+                      {formatPrice(product.price, product.currency)} each
+                    </span>
+                    {product.sourceUrl && (
+                      <a
+                        className="text-link source-link"
+                        href={product.sourceUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        Official page <ArrowRight size={12} />
+                      </a>
+                    )}
+                  </div>
+                  <div className="cart-qty" role="group" aria-label={`Quantity of ${product.name}`}>
+                    <button
+                      onClick={() => setCartQuantity(product.slug, quantity - 1)}
+                      aria-label={`Decrease quantity of ${product.name}`}
+                    >
+                      <Minus size={13} />
+                    </button>
+                    <span aria-live="polite">{quantity}</span>
+                    <button
+                      onClick={() => setCartQuantity(product.slug, quantity + 1)}
+                      disabled={quantity >= MAX_CART_QUANTITY}
+                      aria-label={`Increase quantity of ${product.name}`}
+                    >
+                      <Plus size={13} />
+                    </button>
+                  </div>
+                  <strong className="cart-line-total">
+                    {formatPrice(Number(product.price) * quantity, product.currency)}
+                  </strong>
+                  <button
+                    className="cart-remove"
+                    onClick={() => removeFromCart(product.slug)}
+                    aria-label={`Remove ${product.name} from cart`}
+                  >
+                    <Trash2 size={15} />
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+          <aside className="cart-summary" aria-label="Cart summary">
+            <span className="eyebrow">REFERENCE TOTAL</span>
+            <strong className="cart-subtotal">{formatPrice(subtotal, currency)}</strong>
+            <p className="demo-disclaimer">
+              Based on reference prices, not live offers. Confirm price and availability at the
+              official source before buying.
+            </p>
+            <button className="secondary-action" onClick={clearCart}>
+              Clear cart
+            </button>
+          </aside>
         </div>
       )}
     </main>
